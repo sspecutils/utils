@@ -1,0 +1,48 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Window = Rayfield:CreateWindow({
+   Name = "Loading...",
+   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   LoadingTitle = "",
+   LoadingSubtitle = "",
+   ShowText = "Rayfield", -- for mobile users to unhide Rayfield, change if you'd like
+   Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
+   ToggleUIKeybind = "K", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
+
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false, -- Prevents Rayfield from emitting warnings when the script has a version mismatch with the interface.
+
+    ScriptID = "sid_lgybk8eg9cj3",
+
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "Big Hub"
+   },
+
+   Discord = {
+      Enabled = true, -- Prompt the user to join your Discord server if their executor supports it
+      Invite = "3zn6k9MRE5", -- The Discord invite code, do not include Discord.gg/. E.g. Discord.gg/ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the Discord every time they load it up
+   },
+
+   KeySystem = true, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Key System",
+      Subtitle = "discord.gg/3zn6k9MRE5",
+      Note = "Find the key for free in the discord.\n(discord.gg/3zn6k9MRE5)", -- Use this to tell the user how to get a key
+      FileName = "sspeckey", -- It is recommended to use something unique, as other scripts using Rayfield may overwrite your key file
+      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {"24MillwoodStreet"} -- List of keys that the system will accept, can be RAW file links (pastebin, github, etc.) or simple strings ("hello", "key22")
+   }
+})
+if game.GameId == 8473646150 then --powersim
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/sspecutils/utils/refs/heads/main/powersimX"))()
+elseif game.GameId == 98929893 then --DbRage
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/sspecutils/utils/refs/heads/main/DBRage"))()
+elseif game.GameId == 10131390815 then --Throw a Coin
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/sspecutils/utils/refs/heads/main/Throw%20a%20Coin"))()
+elseif game.GameId == 10168931576 then --Roll to defend
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/sspecutils/utils/refs/heads/main/Roll%20To%20Defend"))()
+end
