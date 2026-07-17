@@ -1,0 +1,316 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local Window = Rayfield:CreateWindow({
+   Name = "Roll To Defend",
+   LoadingTitle = "Roll To Defend",
+   LoadingSubtitle = "by sspec",
+   Theme = "Default",
+   ToggleUIKeybind = "K",
+   ConfigurationSaving = {Enabled = false, FolderName = "", FileName = ""},
+})
+
+local Tab = Window:CreateTab("Main", 0)
+local Section = Tab:CreateSection("Main")
+
+local QuickRoll = false
+local AutoPickupItems = false
+local VirtualUser = game:GetService("VirtualUser")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LocalPlayer = Players.LocalPlayer
+-- Register our own anti-AFK
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+
+    -- Method 1
+    VirtualUser:ClickButton2(Vector2.new(0, 0))
+
+    -- Method 2
+    VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+end)
+local controllers = ReplicatedStorage:WaitForChild("Game"):WaitForChild("Controllers")
+
+local function removeAntiAFK()
+    local antiAFK = controllers:FindFirstChild("AntiAFKController")
+    if antiAFK then
+        antiAFK:Destroy()
+        return true
+    end
+    return false
+end
+removeAntiAFK()
+
+controllers.ChildAdded:Connect(function(child)
+    if child.Name == "AntiAFKController" then
+        child:Destroy()
+    end
+end)
+local connection
+connection = controllers.ChildAdded:Connect(function(child)
+    if child.Name == "AntiAFKController" then
+        child:Destroy()
+        connection:Disconnect()
+    end
+end)
+Rayfield:Notify({
+   Title = "Anti-AFK",
+   Content = "Enabled Anti-AFK",
+   Duration = 3,
+   Image = 83898160590116,
+})
+--// Quick Roll
+Tab:CreateToggle({
+    Name = "Quick Roll",
+    CurrentValue = false,
+    Flag = "QuickRoll",
+    Callback = function(Value)
+        QuickRoll = Value
+
+        task.spawn(function()
+            local Event = ReplicatedStorage:WaitForChild("RollEvents"):WaitForChild("RollRequest")
+
+            while QuickRoll do
+                pcall(function()
+                    Event:FireServer(
+                        true,
+                        {},
+                        false,
+                        1
+                    )
+                end)
+
+                task.wait(0.1)
+            end
+        end)
+    end,
+})
+
+--// Auto Pickup Items
+Tab:CreateToggle({
+    Name = "Auto Pickup Items",
+    CurrentValue = false,
+    Flag = "AutoPickupItems",
+    Callback = function(Value)
+        AutoPickupItems = Value
+
+        task.spawn(function()
+            while AutoPickupItems do
+                local character = LocalPlayer.Character
+                local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+                if hrp then
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        if obj:IsA("BasePart") and obj.Name == "Item" then
+                            obj.CFrame = hrp.CFrame
+                        end
+                    end
+                end
+
+                task.wait(1)
+            end
+        end)
+    end,
+})
+local AutoEquipBest = false
+
+Tab:CreateToggle({
+    Name = "Auto Equip Best",
+    CurrentValue = false,
+    Flag = "AutoEquipBest",
+    Callback = function(Value)
+        AutoEquipBest = Value
+
+        task.spawn(function()
+            local Event = game:GetService("ReplicatedStorage")
+                :WaitForChild("InventoryRemotes")
+                :WaitForChild("EquipBest")
+
+            while AutoEquipBest do
+                pcall(function()
+                    Event:FireServer()
+                end)
+
+                task.wait(5)
+            end
+        end)
+    end,
+})
+local Divider = Tab:CreateDivider()
+--// Auto Buy Next Zone
+
+local AutoBuyNextZone = false
+
+Tab:CreateToggle({
+    Name = "Auto Buy Next Zone",
+    CurrentValue = false,
+    Flag = "AutoBuyNextZone",
+    Callback = function(Value)
+        AutoBuyNextZone = Value
+
+        if Value then
+            task.spawn(function()
+                local Players = game:GetService("Players")
+                local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+                local Notify = Players.LocalPlayer.PlayerGui.Main.Left.Buttons.LeftButtons.ZoneTeleporter.Notify
+                local PurchaseZone = ReplicatedStorage.ZoneRemotes.PurchaseZone
+
+                while AutoBuyNextZone do
+                    if Notify.Visible then
+                        pcall(function()
+                            PurchaseZone:InvokeServer()
+                        end)
+                    end
+
+                    task.wait(1)
+                end
+            end)
+        end
+    end,
+})
+--// Auto Claim Index
+
+local AutoClaimIndex = false
+
+Tab:CreateToggle({
+    Name = "Auto Claim Index",
+    CurrentValue = false,
+    Flag = "AutoClaimIndex",
+    Callback = function(Value)
+        AutoClaimIndex = Value
+
+        if Value then
+            task.spawn(function()
+                local Players = game:GetService("Players")
+                local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+                local Notify = Players.LocalPlayer.PlayerGui.Main.Left.Buttons.LeftButtons.Index.Notify
+                local ClaimIndexReward = ReplicatedStorage.ClaimIndexReward
+
+                local Rewards = {
+                    "normal",
+                    "stellar",
+                    "iced",
+                    "inverted"
+                }
+
+                while AutoClaimIndex do
+                    if Notify.Visible then
+                        for _, reward in ipairs(Rewards) do
+                            pcall(function()
+                                ClaimIndexReward:FireServer(reward)
+                                wait(1)
+                            end)
+                        end
+                    end
+
+                    task.wait(1)
+                end
+            end)
+        end
+    end,
+})
+local Section = Tab:CreateSection("Potion Shop")
+local AutoBuyPotions = false
+local SelectedPotions = {}
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local PotionScrollingFrame = LocalPlayer.PlayerGui.Main.Frames.FRAMES.PotionShop.Main.Holder.ScrollingFrame
+local PurchasePotion = game:GetService("ReplicatedStorage").PotionShopRemotes.PurchasePotion
+
+-- Maps display name -> potion frame
+local PotionMap = {}
+local PotionOptions = {}
+
+for _, potion in ipairs(PotionScrollingFrame:GetChildren()) do
+    if potion:IsA("Frame") and potion.Name ~= "PotionTemplate" then
+        local infoFrame = potion:FindFirstChild("1")
+        local nameLabel = infoFrame and infoFrame:FindFirstChild("PotionName")
+
+        if nameLabel and nameLabel:IsA("TextLabel") then
+            local displayName = nameLabel.Text
+
+            table.insert(PotionOptions, displayName)
+            PotionMap[displayName] = potion
+        end
+    end
+end
+
+table.sort(PotionOptions)
+
+Tab:CreateDropdown({
+    Name = "Potions",
+    Options = PotionOptions,
+    CurrentOption = {},
+    MultipleOptions = true,
+    Flag = "PotionSelection",
+    Callback = function(options)
+        SelectedPotions = options
+    end,
+})
+
+Tab:CreateToggle({
+    Name = "Auto Buy Potions",
+    CurrentValue = false,
+    Flag = "AutoBuyPotions",
+    Callback = function(Value)
+        AutoBuyPotions = Value
+
+        task.spawn(function()
+            while AutoBuyPotions do
+                for _, potionName in ipairs(SelectedPotions) do
+                    local potion = PotionMap[potionName]
+
+                    if potion then
+                        local purchaseFrame = potion:FindFirstChild("1")
+
+                        if purchaseFrame then
+                            local button = purchaseFrame:FindFirstChildWhichIsA("TextButton")
+
+                            if button and button.Visible then
+                                pcall(function()
+                                    PurchasePotion:FireServer(potion.LayoutOrder)
+                                end)
+                            end
+                        end
+                    end
+                end
+
+                task.wait(1)
+            end
+        end)
+    end,
+})
+local Tab = Window:CreateTab("Extra", 0)
+local Section = Tab:CreateSection("Misc")
+local FPSCap = 240
+
+local function ApplyFPSCap()
+    if setfpscap then
+        setfpscap(FPSCap)
+    end
+end
+
+Tab:CreateSlider({
+    Name = "FPS Cap",
+    Range = {15, 240},
+    Increment = 5,
+    Suffix = " FPS",
+    CurrentValue = 240,
+    Flag = "FPSCap",
+    Callback = function(Value)
+        FPSCap = Value
+        ApplyFPSCap()
+    end,
+})
+
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    ApplyFPSCap()
+end)
+
+ApplyFPSCap()
